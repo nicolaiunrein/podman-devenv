@@ -1,0 +1,18 @@
+version: "3"
+tasks:
+  default:
+    cmds:
+      - task: enter
+      
+  enter:
+    deps: 
+      - build
+    cmds:
+      - task: run
+  build:
+    cmds:
+      - podman build -t dev .
+
+  run:
+    cmds:
+      - podman run --rm -it --network host --privileged -v ".":"/src" localhost/dev

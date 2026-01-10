@@ -1,0 +1,102 @@
+# https://patorjk.com/software/taag/#p=display&f=ANSI%20Regular&t=Type%20Something%20
+#
+# ╔═══════════════════════════════════════════════════╗
+# ║                                                   ║
+# ║       ███████ ███████ ██   ██ ██████   ██████     ║
+# ║          ███  ██      ██   ██ ██   ██ ██          ║
+# ║         ███   ███████ ███████ ██████  ██          ║
+# ║        ███         ██ ██   ██ ██   ██ ██          ║
+# ║    ██ ███████ ███████ ██   ██ ██   ██  ██████     ║
+# ║                                                   ║
+# ╚═══════════════════════════════════════════════════╝
+
+                                           
+                                           
+if [ -d "$HOME/scripts" ] ; then
+  PATH="$PATH:$HOME/scripts"
+fi
+
+if [ -d "$HOME/.local/bin" ] ; then
+  PATH="$PATH:$HOME/.local/bin"
+fi
+
+
+PS1='%F{blue}%B%~%b%f %F{green}❯%f '
+
+function parse_git_dirty {
+  [[ $(git status --porcelain 2> /dev/null) ]] && echo "*"
+}
+function parse_git_branch {
+  git branch --no-color 2> /dev/null | sed -e '/^[^*]/d' -e "s/* \(.*\)/(\1$(parse_git_dirty)) /"
+}
+
+function parse_git_stat() {
+  local o files ins dels
+  o=$(git diff --shortstat HEAD 2>/dev/null) || return
+  [[ -z $o ]] && return
+  files=$(grep -oE '[0-9]+ files? changed' <<<"$o" | grep -oE '^[0-9]+')
+  ins=$(grep -oE '[0-9]+ insertions?\(\+\)' <<<"$o" | grep -oE '^[0-9]+'); [[ -z $ins ]] && ins=0
+  dels=$(grep -oE '[0-9]+ deletions?\(-\)'  <<<"$o" | grep -oE '^[0-9]+'); [[ -z $dels ]] && dels=0
+  adds=$(git status --porcelain . 2>/dev/null | grep -E '^(A|\?\?) ' | wc -l | tr -d ' ')
+  local SO=$'\001' SC=$'\002'
+  local G="${SO}"$'\e[1;32m'"${SC}"
+  local RD="${SO}"$'\e[31m'"${SC}"
+  local GR="${SO}"$'\e[90m'"${SC}"
+  local R="${SO}"$'\e[0m'"${SC}"
+  echo " [${G}+${ins}${R} ${RD}-${dels}${R}] ${GR}${files:-0} changes ${adds:-0} added${R}"
+}
+
+HISTFILE=~/.history
+HISTSIZE=100000
+SAVEHIST=100000
+
+setopt inc_append_history
+
+autoload -U compinit && compinit
+
+export ZVM_VI_INSERT_ESCAPE_BINDKEY=jk
+
+
+bindkey -v
+bindkey "\e[A" history-beginning-search-backward
+bindkey "\e[B" history-beginning-search-forward
+
+
+source $HOME/.config/zsh-vi-mode/zsh-vi-mode.plugin.zsh
+
+function history-search-widget() {
+  zle "history-beginning-search-$1"
+}
+
+function custom_keybindings() {
+  zvm_define_widget history-search-widget
+
+  zvm_bindkey vicmd 'k' history-search-widget "backward"
+  zvm_bindkey vicmd 'j' history-search-widget "forward"
+  zvm_bindkey viins '^K' history-search-widget "backward"
+  zvm_bindkey viins '^J' history-search-widget "forward"
+}
+
+zvm_after_init_commands+=(custom_keybindings)
+
+eval "$(zoxide init --cmd 'cd' zsh)"
+
+alias ss=source /root/.zshrc
+
+# alias v='nvim'
+# alias o='xdg-open'
+# alias g='git'
+#
+# # color
+# alias ls='ls --color=auto -hv'
+# alias grep='grep --color=auto'
+# alias diff='diff --color=auto'
+# alias ip='ip -c=auto'
+#
+# alias l='ls'
+# alias ll='ls -l'
+# alias la='ls -lA'
+#
+# alias mv='mv -i'
+
+# precmd () { print -Pn "\e]2;%-3~\a"; }

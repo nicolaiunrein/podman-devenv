@@ -1,0 +1,129 @@
+format = """
+[ ](fg:#DA627D bg:#9A348E)\
+$username\
+[](bg:#DA627D fg:#9A348E)\
+$directory\
+[](fg:#DA627D bg:#FCA17D)\
+$git_branch\
+$git_status\
+[](fg:#FCA17D bg:#86BBD8)\
+$c\
+$elixir\
+$elm\
+$golang\
+$haskell\
+$java\
+$julia\
+$nodejs\
+$nim\
+$rust\
+[](fg:#86BBD8 bg:#06969A)\
+$docker_context\
+[](fg:#06969A bg:#33658A)\
+[ ](fg:#33658A)
+[](bold blue) 
+"""
+
+right_format = """
+[](fg:#33658A)\
+$time\
+"""
+
+add_newline = false
+continuation_prompt = "▶▶"
+
+
+# You can also replace your username with a neat symbol like  to save some space
+[username]
+show_always = true
+style_user = "bg:#9A348E fg:#ffffff"
+style_root = "bg:#9A348E fg:#FFFFFF"
+format = '[ ]($style)'
+
+[directory]
+style = "bg:#DA627D fg:#FFFFFF"
+format = "[ $path ]($style)"
+truncate_to_repo = false
+truncation_length = 7
+truncation_symbol = "…/"
+
+[c]
+symbol = " "
+style = "bg:#86BBD8 fg:#3B4252"
+format = '[ $symbol ($version) ]($style)'
+
+[docker_context]
+symbol = " "
+style = "bg:#06969A"
+format = '[ $symbol $context ]($style) $path'
+
+[elixir]
+symbol = " "
+style = "bg:#86BBD8 fg:#3B4252"
+format = '[ $symbol ($version) ]($style)'
+
+[elm]
+symbol = " "
+style = "bg:#86BBD8 fg:#3B4252"
+format = '[ $symbol ($version) ]($style)'
+
+[git_branch]
+symbol = ""
+style = "bg:#FCA17D fg:#3B4252"
+format = '[ $symbol $branch ]($style)'
+
+[git_status]
+style = "bg:#FCA17D fg:#3B4252"
+format = "[[($conflicted$untracked$modified$renamed$deleted)]($style) ($staged) ($ahead_behind$stashed)]($style)"
+conflicted = "="
+modified = "*"
+stashed = "≡"
+ahead = "⇡"
+behind = "⇣"
+diverged = "⇕"
+up_to_date = ""
+untracked = "?"
+staged = "+"
+renamed = "»"
+deleted = "✘"
+
+[golang]
+symbol = " "
+style = "bg:#86BBD8 fg:#3B4252"
+format = '[ $symbol ($version) ]($style)'
+
+[haskell]
+symbol = " "
+style = "bg:#86BBD8 fg:#3B4252"
+format = '[ $symbol ($version) ]($style)'
+
+[java]
+symbol = " "
+style = "bg:#86BBD8 fg:#3B4252"
+format = '[ $symbol ($version) ]($style)'
+
+[julia]
+symbol = " "
+style = "bg:#86BBD8 fg:#3B4252"
+format = '[ $symbol ($version) ]($style)'
+
+[nodejs]
+symbol = ""
+style = "bg:#86BBD8 fg:#3B4252"
+format = '[ $symbol ($version) ]($style)'
+
+[nim]
+symbol = " "
+style = "bg:#86BBD8 fg:#3B4252"
+format = '[ $symbol ($version) ]($style)'
+
+[rust]
+symbol = ""
+style = "bg:#86BBD8 fg:#3B4252"
+format = '[ $symbol ($version) ]($style)'
+
+[time]
+disabled = false
+time_format = "%R"              # Hour:Minute Format
+style = "bg:#33658A fg:#FFFFFF"
+format = '[  $time ]($style)'

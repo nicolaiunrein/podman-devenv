@@ -24,12 +24,17 @@ RUN mkdir -p $(dirname $ZINIT_HOME) && \
 
 RUN git clone https://github.com/jeffreytse/zsh-vi-mode.git /root/.config/zsh-vi-mode
 
-RUN apk add fzf
+RUN apk add \
+  fzf \
+  zsh-vcs
+
+RUN apk add tmux
 
 COPY ./config /root/.config
 
 RUN ln -s ~/.config/zshrc ~/.zshrc
 RUN ln -s ~/.config/gitconfig ~/.gitconfig
+RUN ln -s ~/.config/.tmux.conf ~/.tmux.conf
 
 
 CMD ["zsh"]

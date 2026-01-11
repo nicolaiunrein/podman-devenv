@@ -29,8 +29,8 @@ right_format = """
 $time\
 """
 
-add_newline = false
-continuation_prompt = "▶▶"
+# add_newline = false
+# continuation_prompt = "▶▶"
 
 
 # You can also replace your username with a neat symbol like  to save some space

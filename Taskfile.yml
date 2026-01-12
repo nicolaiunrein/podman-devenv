@@ -15,4 +15,4 @@ tasks:
 
   run:
     cmds:
-      - podman run --rm -it --network host --privileged -v ".":"/src" localhost/dev
+      - podman run --rm -it --network host --privileged -v "./home":"/src" localhost/dev

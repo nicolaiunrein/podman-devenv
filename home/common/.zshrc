@@ -1,3 +1,5 @@
+export PATH="$PATH;/root/.cargo/bin"
+
 autoload -Uz compinit vcs_info
 compinit
 

@@ -1,40 +1,53 @@
 FROM alpine
 
+RUN apk add rustup
+
+RUN rustup-init -y
+
+ENV PATH="$PATH:/root/.cargo/bin"
+
+RUN rustup default nightly
+
+RUN apk add build-base curl bash
+
+RUN curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash
+
+
 RUN apk add \
-  zsh \
+  curl \
+  fzf \
+  git \
+  jq \
   neovim \
   ripgrep \
+  tmux \
   yq \
-  jq \
-  starship 
-
-
-RUN apk add \
   zoxide \
-  curl \
-  git
+  zsh \
+  zsh-vcs \
+  ;
 
 
 ENV EDITOR=nvim
 ENV SHELL=zsh
-ENV ZINIT_HOME="/root/.config/zinit"
 
-RUN mkdir -p $(dirname $ZINIT_HOME) && \
-  git clone https://github.com/zdharma-continuum/zinit.git "$ZINIT_HOME"
+WORKDIR /root
 
-RUN git clone https://github.com/jeffreytse/zsh-vi-mode.git /root/.config/zsh-vi-mode
+RUN apk add stow
 
-RUN apk add \
-  fzf \
-  zsh-vcs
+RUN mkdir -p /root/config/common
+RUN git clone https://github.com/jeffreytse/zsh-vi-mode.git .zsh-vi-mode
 
-RUN apk add tmux
+RUN rustup component add rust-analyzer
 
-COPY ./config /root/.config
+COPY ./home /root/config
+RUN mv .zsh-vi-mode /root/config/common
+RUN cd /root/config && stow common
+RUN ln -sf /src/nvim/.config /root/.config
 
-RUN ln -s ~/.config/zshrc ~/.zshrc
-RUN ln -s ~/.config/gitconfig ~/.gitconfig
-RUN ln -s ~/.config/.tmux.conf ~/.tmux.conf
 
+# RUN ln -s ~/.config/zshrc ~/.zshrc
+# RUN ln -s ~/.config/gitconfig ~/.gitconfig
+# RUN ln -s ~/.config/.tmux.conf ~/.tmux.conf
 
 CMD ["zsh"]

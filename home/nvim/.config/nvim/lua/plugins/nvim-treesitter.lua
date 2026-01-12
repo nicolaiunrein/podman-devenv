@@ -1,0 +1,50 @@
+return {
+  'nvim-treesitter/nvim-treesitter',
+  lazy = false,
+  build = ':TSUpdate',
+  config = function()
+    require("nvim-treesitter").setup({
+      ensure_installed = {
+        "bash",
+        "c",
+        "cmake",
+        "cpp",
+        "css",
+        "dockerfile",
+        "gitignore",
+        "html",
+        "javascript",
+        "json",
+        "lua",
+        "markdown",
+        "python",
+        "rust",
+        "scss",
+        "svelte",
+        "toml",
+        "typescript",
+        "vue",
+        "yaml",
+      },
+
+      highlight = {
+        enable = true,
+        additional_vim_regex_highlighting = false,
+        disable = { "markdown" },
+      },
+      indent = {
+        enable = true,
+      },
+      auto_install = true,
+      incremental_selection = {
+        enable = true,
+        keymaps = {
+          init_selection = ";;",
+          node_incremental = ";;",
+          scope_incremental = "g;;",
+          node_decremental = "'",
+        },
+      },
+    })
+  end,
+}

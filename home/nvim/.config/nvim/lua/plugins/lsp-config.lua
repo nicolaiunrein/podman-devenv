@@ -1,225 +1,226 @@
-local LspGroup = vim.api.nvim_create_augroup("Custom", {})
-
-vim.api.nvim_create_autocmd("LspAttach", {
-  group = LspGroup,
-  callback = function(e)
-    -- vim.api.nvim_create_autocmd("BufWritePre", {
-    -- 	buffer = e.buf,
-    -- 	callback = function()
-    -- 		vim.lsp.buf.format()
-    -- 	end,
-    -- 	group = LspGroup,
-    -- })
-
-    vim.keymap.set("n", "gd", function()
-      vim.lsp.buf.definition()
-    end, { desc = "Goto definition", buffer = e.buf })
-    vim.keymap.set("n", "K", function()
-      vim.lsp.buf.hover()
-    end, { desc = "Hover Lsp", buffer = e.buf })
-
-    vim.keymap.set("n", "<Leader>lh", function()
-      vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled())
-    end, { desc = "Toggle inlay hints", buffer = e.buf })
-
-    vim.keymap.set("n", "<leader>la", function()
-      vim.lsp.buf.code_action()
-    end, { desc = "Code action", buffer = e.buf })
-
-    vim.keymap.set("n", "<leader>lR", function()
-      vim.cmd(":Telescope lsp_references show_line=false layout_strategy=vertical")
-    end, { desc = "Lsp References", buffer = e.buf })
-
-    vim.keymap.set("n", "<leader>lr", function()
-      vim.lsp.buf.rename()
-    end, { desc = "Lsp Rename", buffer = e.buf })
-  end,
-})
-
-vim.g.rustaceanvim = {
-  server = {
-    settings = function(project_root)
-      local config = require("rustaceanvim.config.server").load_rust_analyzer_settings(project_root)
-      vim.notify("Loaded rust-analyzer settings from " .. project_root, "info")
-      return config
-    end,
-  },
-}
-
-return {
-  "neovim/nvim-lspconfig",
-  lazy = false,
-  dependencies = {
-    "williamboman/mason.nvim",
-    "williamboman/mason-lspconfig.nvim",
-    "hrsh7th/cmp-nvim-lsp",
-    "hrsh7th/cmp-buffer",
-    "hrsh7th/cmp-path",
-    "hrsh7th/cmp-cmdline",
-    "hrsh7th/nvim-cmp",
-    "L3MON4D3/LuaSnip",
-    "saadparwaiz1/cmp_luasnip",
-    "j-hui/fidget.nvim",
-    {
-      "mrcjkb/rustaceanvim",
-      version = "^5", -- Recommended
-    },
-  },
-  opts = {},
-  config = function()
-    vim.diagnostic.config({
-      severity_sort = true,
-      float = {
-        border = "none",
-        format = function(x)
-          return x.message .. "\n------------------------------------"
-        end,
-        prefix = function(x)
-          local icons = {
-            Error = "",
-            Warning = "",
-            Information = "",
-            Hint = "",
-          }
-
-          return icons[x.severity] .. "> "
-        end,
-        suffix = "",
-        source = false,
-      },
-      jump = {
-        enable = true,
-      },
-      virtual_text = {
-        spacing = 4,
-        prefix = "",
-      },
-    })
-    local cmp = require("cmp")
-    local cmp_lsp = require("cmp_nvim_lsp")
-    local capabilities = vim.tbl_deep_extend(
-      "force",
-      {},
-      vim.lsp.protocol.make_client_capabilities(),
-      cmp_lsp.default_capabilities()
-    )
-    local fidget = require("fidget")
-    fidget.setup({})
-    fidget.notification.suppress(true)
-
-    require("mason").setup()
-
-    local augroup = vim.api.nvim_create_augroup("LspFormatting", {})
-
-    require("mason-lspconfig").setup({
-      ensure_installed = {
-        "lua_ls",
-        "typos_lsp",
-      },
-      handlers = {
-        function(server_name) -- default handler (optional)
-          if server_name == "rust_analyzer" then
-            -- rust_analyzer is setup by rustaceanvim
-            return
-          end
-          require("lspconfig")[server_name].setup({
-            capabilities = capabilities,
-
-            on_attach = function(client, bufnr)
-              require("workspace-diagnostics").populate_workspace_diagnostics(client, bufnr)
-
-              if client.supports_method("textDocument/formatting") then
-                vim.api.nvim_clear_autocmds({ group = augroup, buffer = bufnr })
-                vim.api.nvim_create_autocmd("BufWritePre", {
-                  group = augroup,
-                  buffer = bufnr,
-                  callback = function()
-                    vim.lsp.buf.format({ async = false })
-                  end,
-                })
-              end
-            end,
-          })
-        end,
-        ["ts_ls"] = function()
-          require("lspconfig").ts_ls.setup({
-            init_options = {
-              plugins = {
-                {
-                  name = "@vue/typescript-plugin",
-                  -- location = "/usr/local/lib/node_modules/@vue/typescript-plugin",
-                  location = "C:\\ProgramData\\nvm\\v20.10.0\\node_modules\\@vue\\typescript-plugin",
-                  languages = { "javascript", "typescript", "vue" },
-                },
-              },
-            },
-            filetypes = {
-              "javascript",
-              "typescript",
-              "vue",
-            },
-          })
-        end,
-        ["typos_lsp"] = function()
-          require("lspconfig").typos_lsp.setup({
-            init_options = {
-              diagnosticSeverity = "Info", -- at which level to report spelling mistakes
-            },
-            autostart = false,
-          })
-        end,
-        ["lua_ls"] = function()
-          local lspconfig = require("lspconfig")
-          lspconfig.lua_ls.setup({
-            capabilities = capabilities,
-            settings = {
-              Lua = {
-                runtime = { version = "Lua 5.1" },
-                diagnostics = {
-                  globals = { "vim" },
-                },
-              },
-            },
-          })
-        end,
-      },
-    })
-
-    ------------------------------------------------------------------
-    ------------------------------	CMP ------------------------------
-    ------------------------------------------------------------------
-
-    local cmp_select = { behavior = cmp.SelectBehavior.Select }
-
-    cmp.setup({
-      snippet = {
-        expand = function(args)
-          require("luasnip").lsp_expand(args.body) -- For `luasnip` users.
-        end,
-      },
-      mapping = cmp.mapping.preset.insert({
-        ["<S-TAB>"] = cmp.mapping.select_prev_item(cmp_select),
-        ["<TAB>"] = cmp.mapping.select_next_item(cmp_select),
-        ["<CR>"] = cmp.mapping.confirm({ select = false }),
-      }),
-      sources = cmp.config.sources({
-        { name = "nvim_lsp" },
-        { name = "luasnip" }, -- For luasnip users.
-      }, {
-        { name = "buffer" },
-      }),
-    })
-
-    vim.diagnostic.config({
-      -- update_in_insert = true,
-      float = {
-        focusable = false,
-        style = "minimal",
-        border = "rounded",
-        source = "always",
-        header = "",
-        prefix = "",
-      },
-    })
-  end,
-}
+return {}
+-- local LspGroup = vim.api.nvim_create_augroup("Custom", {})
+--
+-- vim.api.nvim_create_autocmd("LspAttach", {
+--   group = LspGroup,
+--   callback = function(e)
+--     -- vim.api.nvim_create_autocmd("BufWritePre", {
+--     -- 	buffer = e.buf,
+--     -- 	callback = function()
+--     -- 		vim.lsp.buf.format()
+--     -- 	end,
+--     -- 	group = LspGroup,
+--     -- })
+--
+--     vim.keymap.set("n", "gd", function()
+--       vim.lsp.buf.definition()
+--     end, { desc = "Goto definition", buffer = e.buf })
+--     vim.keymap.set("n", "K", function()
+--       vim.lsp.buf.hover()
+--     end, { desc = "Hover Lsp", buffer = e.buf })
+--
+--     vim.keymap.set("n", "<Leader>lh", function()
+--       vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled())
+--     end, { desc = "Toggle inlay hints", buffer = e.buf })
+--
+--     vim.keymap.set("n", "<leader>la", function()
+--       vim.lsp.buf.code_action()
+--     end, { desc = "Code action", buffer = e.buf })
+--
+--     vim.keymap.set("n", "<leader>lR", function()
+--       vim.cmd(":Telescope lsp_references show_line=false layout_strategy=vertical")
+--     end, { desc = "Lsp References", buffer = e.buf })
+--
+--     vim.keymap.set("n", "<leader>lr", function()
+--       vim.lsp.buf.rename()
+--     end, { desc = "Lsp Rename", buffer = e.buf })
+--   end,
+-- })
+--
+-- vim.g.rustaceanvim = {
+--   server = {
+--     settings = function(project_root)
+--       local config = require("rustaceanvim.config.server").load_rust_analyzer_settings(project_root)
+--       vim.notify("Loaded rust-analyzer settings from " .. project_root, "info")
+--       return config
+--     end,
+--   },
+-- }
+--
+-- return {
+--   "neovim/nvim-lspconfig",
+--   lazy = false,
+--   dependencies = {
+--     -- "williamboman/mason.nvim",
+--     -- "williamboman/mason-lspconfig.nvim",
+--     -- "hrsh7th/cmp-nvim-lsp",
+--     -- "hrsh7th/cmp-buffer",
+--     -- "hrsh7th/cmp-path",
+--     -- "hrsh7th/cmp-cmdline",
+--     -- "hrsh7th/nvim-cmp",
+--     -- "L3MON4D3/LuaSnip",
+--     -- "saadparwaiz1/cmp_luasnip",
+--     -- "j-hui/fidget.nvim",
+--     -- {
+--     --   "mrcjkb/rustaceanvim",
+--     --   version = "^5", -- Recommended
+--     -- },
+--   },
+--   opts = {},
+--   config = function()
+--     vim.diagnostic.config({
+--       severity_sort = true,
+--       float = {
+--         border = "none",
+--         format = function(x)
+--           return x.message .. "\n------------------------------------"
+--         end,
+--         prefix = function(x)
+--           local icons = {
+--             Error = "",
+--             Warning = "",
+--             Information = "",
+--             Hint = "",
+--           }
+--
+--           return icons[x.severity] .. "> "
+--         end,
+--         suffix = "",
+--         source = false,
+--       },
+--       jump = {
+--         enable = true,
+--       },
+--       virtual_text = {
+--         spacing = 4,
+--         prefix = "",
+--       },
+--     })
+--     local cmp = require("cmp")
+--     local cmp_lsp = require("cmp_nvim_lsp")
+--     local capabilities = vim.tbl_deep_extend(
+--       "force",
+--       {},
+--       vim.lsp.protocol.make_client_capabilities(),
+--       cmp_lsp.default_capabilities()
+--     )
+--     local fidget = require("fidget")
+--     fidget.setup({})
+--     fidget.notification.suppress(true)
+--
+--     require("mason").setup()
+--
+--     local augroup = vim.api.nvim_create_augroup("LspFormatting", {})
+--
+--     require("mason-lspconfig").setup({
+--       ensure_installed = {
+--         "lua_ls",
+--         "typos_lsp",
+--       },
+--       handlers = {
+--         function(server_name) -- default handler (optional)
+--           if server_name == "rust_analyzer" then
+--             -- rust_analyzer is setup by rustaceanvim
+--             return
+--           end
+--           require("lspconfig")[server_name].setup({
+--             capabilities = capabilities,
+--
+--             on_attach = function(client, bufnr)
+--               require("workspace-diagnostics").populate_workspace_diagnostics(client, bufnr)
+--
+--               if client.supports_method("textDocument/formatting") then
+--                 vim.api.nvim_clear_autocmds({ group = augroup, buffer = bufnr })
+--                 vim.api.nvim_create_autocmd("BufWritePre", {
+--                   group = augroup,
+--                   buffer = bufnr,
+--                   callback = function()
+--                     vim.lsp.buf.format({ async = false })
+--                   end,
+--                 })
+--               end
+--             end,
+--           })
+--         end,
+--         ["ts_ls"] = function()
+--           require("lspconfig").ts_ls.setup({
+--             init_options = {
+--               plugins = {
+--                 {
+--                   name = "@vue/typescript-plugin",
+--                   -- location = "/usr/local/lib/node_modules/@vue/typescript-plugin",
+--                   location = "C:\\ProgramData\\nvm\\v20.10.0\\node_modules\\@vue\\typescript-plugin",
+--                   languages = { "javascript", "typescript", "vue" },
+--                 },
+--               },
+--             },
+--             filetypes = {
+--               "javascript",
+--               "typescript",
+--               "vue",
+--             },
+--           })
+--         end,
+--         ["typos_lsp"] = function()
+--           require("lspconfig").typos_lsp.setup({
+--             init_options = {
+--               diagnosticSeverity = "Info", -- at which level to report spelling mistakes
+--             },
+--             autostart = false,
+--           })
+--         end,
+--         ["lua_ls"] = function()
+--           local lspconfig = require("lspconfig")
+--           lspconfig.lua_ls.setup({
+--             capabilities = capabilities,
+--             settings = {
+--               Lua = {
+--                 runtime = { version = "Lua 5.1" },
+--                 diagnostics = {
+--                   globals = { "vim" },
+--                 },
+--               },
+--             },
+--           })
+--         end,
+--       },
+--     })
+--
+--     ------------------------------------------------------------------
+--     ------------------------------	CMP ------------------------------
+--     ------------------------------------------------------------------
+--
+--     local cmp_select = { behavior = cmp.SelectBehavior.Select }
+--
+--     cmp.setup({
+--       snippet = {
+--         expand = function(args)
+--           require("luasnip").lsp_expand(args.body) -- For `luasnip` users.
+--         end,
+--       },
+--       mapping = cmp.mapping.preset.insert({
+--         ["<S-TAB>"] = cmp.mapping.select_prev_item(cmp_select),
+--         ["<TAB>"] = cmp.mapping.select_next_item(cmp_select),
+--         ["<CR>"] = cmp.mapping.confirm({ select = false }),
+--       }),
+--       sources = cmp.config.sources({
+--         { name = "nvim_lsp" },
+--         { name = "luasnip" }, -- For luasnip users.
+--       }, {
+--         { name = "buffer" },
+--       }),
+--     })
+--
+--     vim.diagnostic.config({
+--       -- update_in_insert = true,
+--       float = {
+--         focusable = false,
+--         style = "minimal",
+--         border = "rounded",
+--         source = "always",
+--         header = "",
+--         prefix = "",
+--       },
+--     })
+--   end,
+-- }

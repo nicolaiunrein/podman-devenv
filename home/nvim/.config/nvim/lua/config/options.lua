@@ -62,4 +62,3 @@ vim.opt.spelllang = "en_us"
 vim.opt.spell = false
 
 -- Navigation
-vim.opt.autochdir = false

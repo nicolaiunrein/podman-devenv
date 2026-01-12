@@ -25,29 +25,33 @@ RUN apk add \
   zoxide \
   zsh \
   zsh-vcs \
+  stow \
   ;
 
 
 ENV EDITOR=nvim
 ENV SHELL=zsh
+ENV HOME=/root
+ENV TERM=screen-256color
 
 WORKDIR /root
-
-RUN apk add stow
 
 RUN mkdir -p /root/config/common
 RUN git clone https://github.com/jeffreytse/zsh-vi-mode.git .zsh-vi-mode
 
 RUN rustup component add rust-analyzer
 
+RUN apk add tree-sitter-cli
+RUN apk add neovim-doc
+
 COPY ./home /root/config
 RUN mv .zsh-vi-mode /root/config/common
-RUN cd /root/config && stow common
-RUN ln -sf /src/nvim/.config /root/.config
+RUN cd /root/config && stow common && stow nvim
 
-
+# RUN ln -sf /src/nvim/.config /root/.config
 # RUN ln -s ~/.config/zshrc ~/.zshrc
 # RUN ln -s ~/.config/gitconfig ~/.gitconfig
 # RUN ln -s ~/.config/.tmux.conf ~/.tmux.conf
+RUN nvim --headless +qa
 
 CMD ["zsh"]

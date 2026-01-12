@@ -13,7 +13,7 @@ return {
         border = {},
         borderchars = { "–", " ", " ", " ", " ", " ", " ", " " },
         sorting_strategy = "ascending",
-        file_sorter = require("telescope.sorters").fuzzy_with_index_bias, -- or get_fzy_sorter
+        file_sorter = require("telescope.sorters").fuzzy_with_index_bias,    -- or get_fzy_sorter
         generic_sorter = require("telescope.sorters").fuzzy_with_index_bias, -- or get_fzy_sorter
       },
     })

@@ -24,7 +24,7 @@ end, {})
 return {
   "nvim-neo-tree/neo-tree.nvim",
   lazy = false,
-  branch = "v3.x",
+  enabled = true,
   dependencies = {
     "nvim-lua/plenary.nvim",
     "nvim-tree/nvim-web-devicons", -- not strictly required, but recommended
@@ -34,7 +34,7 @@ return {
   config = function()
     require("neo-tree").setup({
       sources = { "filesystem", "buffers", "git_status", "document_symbols" },
-      popup_border_style = { "", " ", "", "", "", "", "", "" },
+      popup_border_style = "rounded",
       source_selector = {
         winbar = true,
       },
